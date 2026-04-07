@@ -27,8 +27,9 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: linear-gradient(155deg, #2a1a1a 0%, #0d0a0a 40%, #1a0d0d 100%);
+body {
+    /* Changed from reddish-brown to the Deep Blue gradient from your photo */
+    background: radial-gradient(circle at top, #1e3799 0%, var(--blue-deep) 50%, #000000 100%);
     color: var(--white);
     font-family: 'DM Sans', sans-serif;
     font-weight: 300;
@@ -39,16 +40,22 @@
   body::before {
     content: '';
     position: fixed; inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
-    background-size: 30px 30px;
+    /* Updated to use blue grid lines to match the "JeoparTy" vibe */
+    background-image: 
+      radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+      linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px), 
+      linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px, 20px 20px, 20px 20px;
     pointer-events: none; z-index: 0;
   }
 
   body::after {
     content: '';
     position: fixed;
-    top: 0; left: 8%; right: 8%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(240,180,41,0.6), transparent);
+    /* Keeping your gold accent line, but giving it a glow to match the screenshot */
+    top: 0; left: 8%; right: 8%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    box-shadow: 0 0 15px var(--gold);
     pointer-events: none; z-index: 0;
   }
 
