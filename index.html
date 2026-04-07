@@ -8,19 +8,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --red:        #c0392b;
-    --red-bright: #e74c3c;
-    --red-dark:   #7b241c;
-    --gold:       #f0b429;
-    --gold-light: #ffd166;
-    --gold-dim:   #7a5c0a;
-    --white:      #ffffff;
-    --muted:      #b8b0c8;
-    --border:     rgba(240,180,41,0.28);
-    --card-bg:    rgba(255,255,255,0.07);
-    --card-border:rgba(255,255,255,0.12);
-    --success:    #2ecc71;
-    --error:      #e74c3c;
+    /* The deep oceanic blue and vibrant cyan/purple from your photo */
+    --blue-deep:   #0a1442;
+    --blue-bright: #3498db;
+    --blue-glow:   #2980b9;
+    --purple-haze: #6c5ce7;
+    --gold:        #f0b429;
+    --gold-light:  #ffd166;
+    --gold-dim:    #7a5c0a;
+    --white:       #ffffff;
+    --muted:       #a8c0ff;
+    --border:      rgba(52, 152, 219, 0.3);
+    --card-bg:     rgba(10, 20, 66, 0.6);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --success:     #2ecc71;
+    --error:       #e74c3c;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -79,11 +81,17 @@
     text-transform: uppercase; color: var(--muted); margin-top: 10px;
   }
 
-  .hero-img {
-    width: 100%; display: block;
-    border-radius: 6px; margin: 20px 0 0;
-    border: none; height: auto;
-  }
+.hero-img {
+    width: 100%;             /* Stretches to the full width of the container */
+    display: block;          /* Ensures no weird gaps at the bottom */
+    border-radius: 6px;      /* Matches the rounded corners of your UI */
+    margin-bottom: 28px;     /* Keeps the clean spacing above the text */
+    margin-top: 28px;     /* Keeps the clean spacing above the text */
+
+    border: none;            /* REMOVES THE BOX */
+    height: auto;            /* Keeps the logo from looking squished */
+}
+
 
   /* ── Card ── */
   .card {
@@ -91,8 +99,9 @@
     border: 1px solid var(--card-border);
     border-radius: 6px; padding: 32px 36px; margin-bottom: 14px;
     backdrop-filter: blur(14px);
-    box-shadow: 0 6px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+    box-shadow: 0 6px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
   }
+
 
   .card-title {
     font-family: 'Bebas Neue', sans-serif;
@@ -101,7 +110,11 @@
     display: flex; align-items: center; gap: 10px;
   }
 
-  .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+ .card-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
 
   /* ── Fields ── */
   .field { margin-bottom: 20px; }
@@ -116,8 +129,8 @@
   input[type="password"],
   textarea {
     width: 100%;
-    background: rgba(0,0,0,0.35);
-    border: 1px solid rgba(255,255,255,0.11);
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 4px; padding: 11px 14px;
     color: var(--white);
     font-family: 'DM Sans', sans-serif;
@@ -129,10 +142,10 @@
   input[type="password"]:focus,
   textarea:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(240,180,41,0.12);
+    box-shadow: 0 0 0 3px rgba(240,180,41,0.15);
   }
 
-  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.18); }
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
   textarea { resize: vertical; min-height: 80px; }
 
   .field-hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
@@ -151,18 +164,22 @@
   }
   .toggle-btn:hover { background: rgba(240,180,41,0.22); color: var(--white); }
 
+
   /* ── Advanced prompt editor ── */
   .advanced-toggle {
     display: flex; align-items: center; gap: 10px;
-    cursor: pointer; user-select: none; padding: 12px 0 2px;
-    color: var(--muted); font-size: 11px; letter-spacing: 2px;
-    text-transform: uppercase; transition: color 0.2s;
+    cursor: pointer; user-select: none;
+    padding: 12px 0 2px;
+    color: var(--muted); font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase;
+    transition: color 0.2s;
     border: none; background: none; width: 100%; text-align: left;
   }
   .advanced-toggle:hover { color: var(--white); }
   .advanced-toggle .adv-line { flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
   .advanced-arrow { font-size: 9px; transition: transform 0.25s; display: inline-block; }
   .advanced-toggle.open .advanced-arrow { transform: rotate(180deg); }
+
   .advanced-body { display: none; padding-top: 18px; }
   .advanced-body.open { display: block; }
 
@@ -170,7 +187,7 @@
     font-family: 'Courier New', monospace !important;
     font-size: 12px !important;
     line-height: 1.65; min-height: 280px;
-    color: rgba(255,255,255,0.6) !important;
+    color: rgba(255,255,255,0.65) !important;
   }
 
   .prompt-hint {
@@ -186,8 +203,9 @@
   }
 
   .reset-prompt-btn {
-    background: none; border: none; color: var(--gold-dim);
-    font-size: 11px; cursor: pointer; padding: 0; margin-top: 7px;
+    background: none; border: none;
+    color: var(--gold-dim); font-size: 11px;
+    cursor: pointer; padding: 0; margin-top: 7px;
     letter-spacing: 1px; text-decoration: underline; display: block;
   }
   .reset-prompt-btn:hover { color: var(--gold); }
@@ -195,24 +213,28 @@
   /* ── Generate button ── */
   .btn-generate {
     width: 100%; margin-top: 24px; padding: 17px;
-    background: var(--red-bright); color: #fff;
+    background: var(--gold); color: #1a0e00;
     border: none; border-radius: 4px;
     font-family: 'Bebas Neue', sans-serif;
     font-size: 22px; letter-spacing: 5px; cursor: pointer;
     transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-    box-shadow: 0 4px 22px rgba(231,76,60,0.35);
+    box-shadow: 0 4px 22px rgba(240,180,41,0.3);
   }
   .btn-generate:hover:not(:disabled) {
-    background: #ff6b6b;
-    box-shadow: 0 4px 30px rgba(231,76,60,0.5);
+    background: var(--gold-light);
+    box-shadow: 0 4px 30px rgba(255,209,102,0.45);
   }
   .btn-generate:active:not(:disabled) { transform: scale(0.99); }
   .btn-generate:disabled {
-    background: var(--red-dark); color: rgba(255,255,255,0.3);
+    background: var(--gold-dim); color: rgba(0,0,0,0.4);
     cursor: not-allowed; box-shadow: none;
   }
 
+
   /* ── Status ── */
+  .status { margin-top: 20px; min-height: 20px; }
+
+   /* ── Status ── */
   .status { margin-top: 20px; min-height: 20px; }
 
   .status-message {
@@ -241,6 +263,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+
   .steps { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
   .step { font-size: 12px; color: var(--muted); padding-left: 16px; position: relative; transition: color 0.3s; }
   .step::before { content: '○'; position: absolute; left: 0; color: var(--muted); }
@@ -254,7 +277,7 @@
     display: none; background: var(--card-bg);
     border: 1px solid var(--border); border-radius: 6px;
     padding: 24px 28px; backdrop-filter: blur(14px);
-    box-shadow: 0 6px 36px rgba(0,0,0,0.4);
+    box-shadow: 0 6px 36px rgba(0,0,0,0.35);
   }
   .preview.visible { display: block; }
 
@@ -263,21 +286,21 @@
     font-size: 12px; letter-spacing: 3px; color: var(--gold); margin-bottom: 16px;
   }
 
-  .questions-list {
-    display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px;
+  .categories-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 14px;
   }
 
-  .q-pill {
-    background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.25);
-    border-radius: 3px; padding: 7px 10px;
-    font-size: 11px; color: var(--white); line-height: 1.4;
-    display: flex; gap: 8px; align-items: baseline;
+  .cat-pill {
+    background: rgba(240,180,41,0.1); border: 1px solid var(--border);
+    border-radius: 3px; padding: 7px 6px;
+    font-size: 10px; text-align: center; color: var(--white); line-height: 1.4;
   }
 
-  .q-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 13px; color: var(--gold); min-width: 20px;
+  .fj-preview {
+    font-size: 12px; color: var(--muted);
+    padding: 10px 0 0; border-top: 1px solid rgba(255,255,255,0.08);
   }
+  .fj-preview strong { color: var(--gold); font-weight: 400; }
 
   .btn-download {
     display: block; width: 100%; margin-top: 16px; padding: 13px;
@@ -292,6 +315,8 @@
     background: var(--gold); color: #1a0e00;
     box-shadow: 0 4px 22px rgba(240,180,41,0.3);
   }
+
+
 
   /* ── Unblock notice ── */
   .unblock-notice {
@@ -322,8 +347,9 @@
   /* ── Footer ── */
   .footer {
     text-align: center; margin-top: 44px;
-    font-size: 11px; color: rgba(168,164,192,0.4); letter-spacing: 1px;
+    font-size: 11px; color: rgba(168,164,192,0.45); letter-spacing: 1px;
   }
+
 </style>
 </head>
 <body>
@@ -332,13 +358,15 @@
   <header class="header">
     <div class="logo-line">
       <div class="logo-bar"></div>
-      <div class="logo-text">Family <span class="accent">Feud</span></div>
+      <div class="logo-text">Family <span class="accent">Fjord</span></div>
       <div class="logo-bar"></div>
     </div>
     <div class="tagline">AI Game Generator · Powerpoint Download</div>
     <!-- Uncomment once you add logo to /static/
     <img src="/static/ff-logo.gif" alt="Family Feud" class="hero-img">
     -->
+	 <img src="/static/logo.gif" alt="FamilyFjord" class="hero-img">
+
   </header>
 
   <div class="card">
