@@ -8,28 +8,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* The deep oceanic blue and vibrant cyan/purple from your photo */
-    --blue-deep:   #0a1442;
-    --blue-bright: #3498db;
-    --blue-glow:   #2980b9;
-    --purple-haze: #6c5ce7;
-    --gold:        #f0b429;
-    --gold-light:  #ffd166;
-    --gold-dim:    #7a5c0a;
-    --white:       #ffffff;
-    --muted:       #a8c0ff;
-    --border:      rgba(52, 152, 219, 0.3);
-    --card-bg:     rgba(10, 20, 66, 0.6);
-    --card-border: rgba(255, 255, 255, 0.1);
-    --success:     #2ecc71;
-    --error:       #e74c3c;
+    --navy:       #0d1530;
+    --gold:       #f0b429;
+    --gold-light: #ffd166;
+    --gold-dim:   #7a5c0a;
+    --white:      #ffffff;
+    --muted:      #a8a4c0;
+    --border:     rgba(240,180,41,0.28);
+    --card-bg:    rgba(255,255,255,0.08);
+    --card-border:rgba(255,255,255,0.13);
+    --success:    #2ecc71;
+    --error:      #e74c3c;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-    /* Changed from reddish-brown to the Deep Blue gradient from your photo */
-    background: radial-gradient(circle at top, #1e3799 0%, var(--blue-deep) 50%, #000000 100%);
+  body {
+    background: linear-gradient(155deg, #2a3f9f 0%, #0d1a4a 40%, #220d52 100%);
     color: var(--white);
     font-family: 'DM Sans', sans-serif;
     font-weight: 300;
@@ -40,22 +35,16 @@ body {
   body::before {
     content: '';
     position: fixed; inset: 0;
-    /* Updated to use blue grid lines to match the "JeoparTy" vibe */
-    background-image: 
-      radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
-      linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px), 
-      linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px);
-    background-size: 40px 40px, 20px 20px, 20px 20px;
+    background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+    background-size: 30px 30px;
     pointer-events: none; z-index: 0;
   }
 
   body::after {
     content: '';
     position: fixed;
-    /* Keeping your gold accent line, but giving it a glow to match the screenshot */
-    top: 0; left: 8%; right: 8%; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    box-shadow: 0 0 15px var(--gold);
+    top: 0; left: 8%; right: 8%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,209,102,0.55), transparent);
     pointer-events: none; z-index: 0;
   }
 
@@ -73,12 +62,12 @@ body {
     justify-content: center; gap: 16px; margin-bottom: 4px;
   }
 
-  .logo-bar { width: 44px; height: 2px; background: var(--red-bright); opacity: 0.9; }
+  .logo-bar { width: 44px; height: 2px; background: var(--gold); opacity: 0.8; }
 
   .logo-text {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 52px; letter-spacing: 4px; color: var(--white); line-height: 1;
-    text-shadow: 0 0 48px rgba(52, 152, 219, 0.5);
+    font-size: 56px; letter-spacing: 5px; color: var(--white); line-height: 1;
+    text-shadow: 0 0 48px rgba(255,209,102,0.35);
   }
 
   .logo-text .accent { color: var(--gold-light); }
@@ -88,6 +77,7 @@ body {
     text-transform: uppercase; color: var(--muted); margin-top: 10px;
   }
 
+  /* ── Optional hero image ── */
 .hero-img {
     width: 100%;             /* Stretches to the full width of the container */
     display: block;          /* Ensures no weird gaps at the bottom */
@@ -98,8 +88,6 @@ body {
     border: none;            /* REMOVES THE BOX */
     height: auto;            /* Keeps the logo from looking squished */
 }
-
-
   /* ── Card ── */
   .card {
     background: var(--card-bg);
@@ -109,7 +97,6 @@ body {
     box-shadow: 0 6px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
   }
 
-
   .card-title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 12px; letter-spacing: 3px; color: var(--gold);
@@ -117,11 +104,9 @@ body {
     display: flex; align-items: center; gap: 10px;
   }
 
-
- .card-title::after {
+  .card-title::after {
     content: ''; flex: 1; height: 1px; background: var(--border);
   }
-
 
   /* ── Fields ── */
   .field { margin-bottom: 20px; }
@@ -170,7 +155,6 @@ body {
     white-space: nowrap; transition: background 0.2s, color 0.2s;
   }
   .toggle-btn:hover { background: rgba(240,180,41,0.22); color: var(--white); }
-
 
   /* ── Advanced prompt editor ── */
   .advanced-toggle {
@@ -237,11 +221,7 @@ body {
     cursor: not-allowed; box-shadow: none;
   }
 
-
   /* ── Status ── */
-  .status { margin-top: 20px; min-height: 20px; }
-
-   /* ── Status ── */
   .status { margin-top: 20px; min-height: 20px; }
 
   .status-message {
@@ -269,7 +249,6 @@ body {
     animation: spin 0.7s linear infinite; flex-shrink: 0; margin-top: 1px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-
 
   .steps { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
   .step { font-size: 12px; color: var(--muted); padding-left: 16px; position: relative; transition: color 0.3s; }
@@ -323,8 +302,6 @@ body {
     box-shadow: 0 4px 22px rgba(240,180,41,0.3);
   }
 
-
-
   /* ── Unblock notice ── */
   .unblock-notice {
     display: none; margin-top: 14px;
@@ -356,8 +333,8 @@ body {
     text-align: center; margin-top: 44px;
     font-size: 11px; color: rgba(168,164,192,0.45); letter-spacing: 1px;
   }
-
 </style>
+
 </head>
 <body>
 <div class="page">
