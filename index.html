@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="/static/favicon-32x32.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Feud AI Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:        #c0392b;
+    --red-bright: #e74c3c;
+    --red-dark:   #7b241c;
+    --gold:       #f0b429;
+    --gold-light: #ffd166;
+    --gold-dim:   #7a5c0a;
+    --white:      #ffffff;
+    --muted:      #b8b0c8;
+    --border:     rgba(240,180,41,0.28);
+    --card-bg:    rgba(255,255,255,0.07);
+    --card-border:rgba(255,255,255,0.12);
+    --success:    #2ecc71;
+    --error:      #e74c3c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: linear-gradient(155deg, #2a1a1a 0%, #0d0a0a 40%, #1a0d0d 100%);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none; z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 8%; right: 8%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(240,180,41,0.6), transparent);
+    pointer-events: none; z-index: 0;
+  }
+
+  .page {
+    position: relative; z-index: 1;
+    max-width: 660px; margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 50px; }
+
+  .logo-line {
+    display: flex; align-items: center;
+    justify-content: center; gap: 16px; margin-bottom: 4px;
+  }
+
+  .logo-bar { width: 44px; height: 2px; background: var(--red-bright); opacity: 0.9; }
+
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; letter-spacing: 4px; color: var(--white); line-height: 1;
+    text-shadow: 0 0 48px rgba(231,76,60,0.4);
+  }
+
+  .logo-text .accent { color: var(--gold-light); }
+
+  .tagline {
+    font-size: 11px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--muted); margin-top: 10px;
+  }
+
+  .hero-img {
+    width: 100%; display: block;
+    border-radius: 6px; margin: 20px 0 0;
+    border: none; height: auto;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px; padding: 32px 36px; margin-bottom: 14px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 6px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 12px; letter-spacing: 3px; color: var(--gold);
+    margin-bottom: 22px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── Fields ── */
+  .field { margin-bottom: 20px; }
+
+  label {
+    display: block; font-size: 10px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 7px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  textarea {
+    width: 100%;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 4px; padding: 11px 14px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 300; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(240,180,41,0.12);
+  }
+
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.18); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .field-hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .field-hint a { color: var(--gold); text-decoration: none; }
+  .field-hint a:hover { text-decoration: underline; }
+
+  .input-row { display: flex; gap: 8px; }
+  .input-row input { flex: 1; }
+
+  .toggle-btn {
+    background: rgba(240,180,41,0.1);
+    border: 1px solid var(--border);
+    color: var(--muted); padding: 0 13px; border-radius: 4px;
+    cursor: pointer; font-size: 11px; letter-spacing: 1px;
+    white-space: nowrap; transition: background 0.2s, color 0.2s;
+  }
+  .toggle-btn:hover { background: rgba(240,180,41,0.22); color: var(--white); }
+
+  /* ── Advanced prompt editor ── */
+  .advanced-toggle {
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; user-select: none; padding: 12px 0 2px;
+    color: var(--muted); font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; transition: color 0.2s;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .advanced-toggle:hover { color: var(--white); }
+  .advanced-toggle .adv-line { flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+  .advanced-arrow { font-size: 9px; transition: transform 0.25s; display: inline-block; }
+  .advanced-toggle.open .advanced-arrow { transform: rotate(180deg); }
+  .advanced-body { display: none; padding-top: 18px; }
+  .advanced-body.open { display: block; }
+
+  .prompt-textarea {
+    font-family: 'Courier New', monospace !important;
+    font-size: 12px !important;
+    line-height: 1.65; min-height: 280px;
+    color: rgba(255,255,255,0.6) !important;
+  }
+
+  .prompt-hint {
+    font-size: 11px; color: var(--muted);
+    margin-top: 8px; line-height: 1.55; font-style: italic;
+  }
+
+  .prompt-hint code {
+    font-family: monospace;
+    background: rgba(240,180,41,0.15);
+    padding: 1px 5px; border-radius: 2px;
+    color: var(--gold-light); font-style: normal;
+  }
+
+  .reset-prompt-btn {
+    background: none; border: none; color: var(--gold-dim);
+    font-size: 11px; cursor: pointer; padding: 0; margin-top: 7px;
+    letter-spacing: 1px; text-decoration: underline; display: block;
+  }
+  .reset-prompt-btn:hover { color: var(--gold); }
+
+  /* ── Generate button ── */
+  .btn-generate {
+    width: 100%; margin-top: 24px; padding: 17px;
+    background: var(--red-bright); color: #fff;
+    border: none; border-radius: 4px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 5px; cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 4px 22px rgba(231,76,60,0.35);
+  }
+  .btn-generate:hover:not(:disabled) {
+    background: #ff6b6b;
+    box-shadow: 0 4px 30px rgba(231,76,60,0.5);
+  }
+  .btn-generate:active:not(:disabled) { transform: scale(0.99); }
+  .btn-generate:disabled {
+    background: var(--red-dark); color: rgba(255,255,255,0.3);
+    cursor: not-allowed; box-shadow: none;
+  }
+
+  /* ── Status ── */
+  .status { margin-top: 20px; min-height: 20px; }
+
+  .status-message {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13px; padding: 12px 16px;
+    border-radius: 4px; border: 1px solid transparent;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .status-message.visible { opacity: 1; transform: translateY(0); }
+  .status-message.loading {
+    border-color: var(--border); background: rgba(255,255,255,0.05); color: var(--gold-light);
+  }
+  .status-message.success {
+    border-color: rgba(46,204,113,0.3); background: rgba(46,204,113,0.07); color: var(--success);
+  }
+  .status-message.error {
+    border-color: rgba(231,76,60,0.3); background: rgba(231,76,60,0.07); color: var(--error);
+  }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(240,180,41,0.25);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0; margin-top: 1px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .steps { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+  .step { font-size: 12px; color: var(--muted); padding-left: 16px; position: relative; transition: color 0.3s; }
+  .step::before { content: '○'; position: absolute; left: 0; color: var(--muted); }
+  .step.active { color: var(--gold-light); }
+  .step.active::before { content: '●'; color: var(--gold-light); }
+  .step.done { color: var(--success); }
+  .step.done::before { content: '✓'; color: var(--success); }
+
+  /* ── Preview ── */
+  .preview {
+    display: none; background: var(--card-bg);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 24px 28px; backdrop-filter: blur(14px);
+    box-shadow: 0 6px 36px rgba(0,0,0,0.4);
+  }
+  .preview.visible { display: block; }
+
+  .preview-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 12px; letter-spacing: 3px; color: var(--gold); margin-bottom: 16px;
+  }
+
+  .questions-list {
+    display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px;
+  }
+
+  .q-pill {
+    background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.25);
+    border-radius: 3px; padding: 7px 10px;
+    font-size: 11px; color: var(--white); line-height: 1.4;
+    display: flex; gap: 8px; align-items: baseline;
+  }
+
+  .q-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px; color: var(--gold); min-width: 20px;
+  }
+
+  .btn-download {
+    display: block; width: 100%; margin-top: 16px; padding: 13px;
+    background: transparent; color: var(--gold);
+    border: 1px solid var(--border); border-radius: 4px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 3px; cursor: pointer;
+    text-align: center; text-decoration: none;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .btn-download:hover {
+    background: var(--gold); color: #1a0e00;
+    box-shadow: 0 4px 22px rgba(240,180,41,0.3);
+  }
+
+  /* ── Unblock notice ── */
+  .unblock-notice {
+    display: none; margin-top: 14px;
+    border: 1px solid rgba(231,76,60,0.3);
+    border-radius: 4px; background: rgba(231,76,60,0.06); padding: 14px 18px;
+  }
+  .unblock-notice-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .unblock-badge {
+    font-family: 'Bebas Neue', sans-serif; font-size: 10px; letter-spacing: 2px;
+    background: var(--error); color: #fff; padding: 2px 7px; border-radius: 2px;
+  }
+  .unblock-title { font-size: 12px; font-weight: 400; color: #f08080; }
+  .unblock-steps { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .unblock-steps li {
+    font-size: 12px; color: var(--muted);
+    display: flex; gap: 10px; align-items: flex-start; line-height: 1.5;
+  }
+  .unblock-steps li .n {
+    min-width: 17px; height: 17px; border-radius: 50%;
+    border: 1px solid rgba(231,76,60,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #f08080; flex-shrink: 0; margin-top: 2px;
+  }
+  .unblock-or { font-size: 10px; letter-spacing: 2px; color: var(--gold-dim); text-align: center; margin: 10px 0 5px; }
+  .unblock-alt { font-size: 12px; color: var(--muted); text-align: center; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; margin-top: 44px;
+    font-size: 11px; color: rgba(168,164,192,0.4); letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <div class="logo-line">
+      <div class="logo-bar"></div>
+      <div class="logo-text">Family <span class="accent">Feud</span></div>
+      <div class="logo-bar"></div>
+    </div>
+    <div class="tagline">AI Game Generator · Powerpoint Download</div>
+    <!-- Uncomment once you add logo to /static/
+    <img src="/static/ff-logo.gif" alt="Family Feud" class="hero-img">
+    -->
+  </header>
+
+  <div class="card">
+    <div class="card-title">Configuration</div>
+
+    <div class="field">
+      <label>Gemini API Key</label>
+      <div class="input-row">
+        <input type="password" id="apiKey" placeholder="AIza..." autocomplete="off" />
+        <button class="toggle-btn" onclick="toggleKey()">SHOW</button>
+      </div>
+      <div class="field-hint">
+        Your key never leaves your browser. Get one free at
+        <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Theme</label>
+      <textarea id="theme" rows="3" placeholder="e.g. Things you find at the beach in Huatulco for a B1 ESL class in Mexico"></textarea>
+      <div class="field-hint">Be specific — the more detail, the better your game.</div>
+    </div>
+
+    <div class="field">
+      <label>Vocabulary List <span style="opacity:0.45">(optional)</span></label>
+      <textarea id="vocab" placeholder="comma-separated words or phrases to include..."></textarea>
+    </div>
+
+    <!-- Advanced prompt editor -->
+    <button class="advanced-toggle" id="advToggle" onclick="toggleAdvanced()">
+      <span class="adv-line"></span>
+      Advanced · Edit Prompt
+      <span class="advanced-arrow">▼</span>
+      <span class="adv-line"></span>
+    </button>
+
+    <div class="advanced-body" id="advBody">
+      <div class="field">
+        <label>System Prompt</label>
+        <textarea class="prompt-textarea" id="promptEditor" rows="16"></textarea>
+        <div class="prompt-hint">
+          Use <code>{{THEME}}</code> and <code>{{VOCAB}}</code> as placeholders —
+          replaced automatically when you generate. The JSON structure at the end
+          must stay intact.
+        </div>
+        <button class="reset-prompt-btn" onclick="resetPrompt()">↺ Reset to default</button>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generate()">
+      Generate Game
+    </button>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="preview" id="preview">
+    <div class="preview-title">Game Preview — 10 Questions</div>
+    <div class="questions-list" id="questionsList"></div>
+    <a class="btn-download" id="downloadBtn" href="#"
+       download="Family Feud Game.pptm"
+       onclick="document.getElementById('unblockNotice').style.display='block'">
+      ⬇ Download .pptm Game File
+    </a>
+    <div class="unblock-notice" id="unblockNotice">
+      <div class="unblock-notice-header">
+        <span class="unblock-badge">⚠ WINDOWS ONLY</span>
+        <span class="unblock-title">Macros blocked by default on downloaded files</span>
+      </div>
+      <ul class="unblock-steps">
+        <li><span class="n">1</span><span>Right-click the <strong>.pptm</strong> file in File Explorer</span></li>
+        <li><span class="n">2</span><span>Choose <strong>Properties</strong></span></li>
+        <li><span class="n">3</span><span>At the bottom, check <strong>Unblock</strong> → click OK</span></li>
+        <li><span class="n">4</span><span>Open the file and click <strong>Enable Content</strong> in the yellow bar</span></li>
+      </ul>
+      <div class="unblock-or">— OR —</div>
+      <div class="unblock-alt">Skip unblocking and play without the scoreboard — all questions and answers still work fine.</div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div>API key is used client-side only &nbsp;·&nbsp; Game file generated server-side</div>
+    <div style="margin-top: 1.5rem;">
+      <a href="https://huatulcofish.wordpress.com/" target="_blank" style="color: var(--gold); text-decoration: none;">Designed by Jeff</a>
+    </div>
+  </footer>
+
+</div>
+<script>
+  const BACKEND_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'
+    : '';
+
+  const DEFAULT_PROMPT =
+`You are generating content for a Family Feud game. Theme: {{THEME}}. {{VOCAB}}
+
+STEP 1: Quietly brainstorm at least 20 possible survey-style questions related to the theme and vocabulary.
+
+STEP 2: Select the BEST 10 questions using these standards:
+
+* The question should have at least 8 natural, believable answers.
+* The question should clearly connect to the theme or vocabulary.
+* The question should be easy to understand for an ESL classroom in Mexico.
+* Avoid questions that could have many equally good answers with no clear ranking.
+
+STEP 3: For each selected question, create exactly 8 answers and 8 point values.
+
+QUALITY RULES:
+
+1. UNIQUENESS: Every question must be different. Do not repeat the same idea with slightly different wording.
+2. MUTUAL EXCLUSIVITY: Ensure answers do not overlap.
+3. DISTINCT ANSWERS: Within a question, all 8 answers must be different.
+4. BELIEVABLE SURVEY ORDER: Answer 1 should be the most common response, etc.
+5. REVIEW TEST: After creating each question, ask yourself: If 100 people were surveyed, would these 8 answers feel realistic and appear in roughly this order? If not, rewrite them.
+6. SPECIFICITY: Avoid vague answers like thing, stuff, person, food, place. Use specific natural responses.
+7. ANSWER LENGTH: Every answer must be 1-4 words only.
+8. ESL FRIENDLY: Use common vocabulary, short wording, and familiar ideas.
+9. APPROPRIATE: No controversial, political, violent, romantic, or adult content.
+10. VARIETY: Mix different types of questions such as objects, places, actions, foods, jobs, animals, school topics, weather, travel, holidays, and daily life when possible.
+11. NATURAL LANGUAGE: Questions should sound like real Family Feud questions.
+
+QUESTION RULES:
+
+* Every question must begin with either:
+  * Name something...
+  * We asked 100 people...
+
+POINT RULES:
+
+* Each question must have exactly 8 answers.
+* Each question must have exactly 8 point values.
+* STRICT MATH: Points must sum to exactly 100.
+* Point values must strictly decrease from answer 1 to answer 8.
+* Answer 1 must be worth between 30 and 50 points.
+* Answers 7 and 8 should usually have small values between 1 and 6.
+* Example valid distribution: [42,18,12,10,7,5,4,2]
+
+FORMATTING RULES:
+
+* Do NOT use quotation marks inside questions or answers.
+* Use only straight apostrophes ('), never curly apostrophes.
+* Do not include numbering inside the question text.
+* Respond ONLY with valid JSON.
+* No markdown, no explanation, no backticks.
+
+Use this exact structure:
+
+{"questions":[
+{"q":"Question 1 text","answers":["A1","A2","A3","A4","A5","A6","A7","A8"],"points":[42,18,12,10,7,5,4,2]},
+{"q":"Question 2 text","answers":["A1","A2","A3","A4","A5","A6","A7","A8"],"points":[40,17,13,10,8,5,4,3]}
+]}`;
+
+  document.getElementById('promptEditor').value = DEFAULT_PROMPT;
+
+  let keyVisible = false;
+
+  function toggleKey() {
+    keyVisible = !keyVisible;
+    document.getElementById('apiKey').type = keyVisible ? 'text' : 'password';
+    document.querySelector('.toggle-btn').textContent = keyVisible ? 'HIDE' : 'SHOW';
+  }
+
+  function toggleAdvanced() {
+    document.getElementById('advToggle').classList.toggle('open');
+    document.getElementById('advBody').classList.toggle('open');
+  }
+
+  function resetPrompt() {
+    if (confirm('Reset prompt to default?')) {
+      document.getElementById('promptEditor').value = DEFAULT_PROMPT;
+    }
+  }
+
+  function setStatus(type, message, steps = null) {
+    const el = document.getElementById('status');
+    const stepsHtml = steps
+      ? '<div class="steps">' + steps.map(s => `<div class="step ${s.state}">${s.label}</div>`).join('') + '</div>'
+      : '';
+    const icon = type === 'loading' ? '<div class="spinner"></div>' : type === 'success' ? '✓' : '✕';
+    el.innerHTML = `<div class="status-message ${type}">${icon}<div><div>${message}</div>${stepsHtml}</div></div>`;
+    requestAnimationFrame(() => el.querySelector('.status-message').classList.add('visible'));
+  }
+
+  async function generate() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const theme  = document.getElementById('theme').value.trim();
+    const vocab  = document.getElementById('vocab').value.trim();
+
+    if (!apiKey) return setStatus('error', 'Please enter your Gemini API key.');
+    if (!theme)  return setStatus('error', 'Please enter a theme.');
+
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    document.getElementById('preview').classList.remove('visible');
+    document.getElementById('unblockNotice').style.display = 'none';
+
+    setStatus('loading', 'Generating game content…', [
+      { state: 'active', label: 'Calling Gemini API' },
+      { state: '',       label: 'Building game file' },
+      { state: '',       label: 'Ready to download' },
+    ]);
+
+    let gameData;
+    try {
+      gameData = await callGemini(apiKey, theme, vocab);
+    } catch (err) {
+      btn.disabled = false;
+      return setStatus('error', 'Gemini error: ' + err.message);
+    }
+
+    setStatus('loading', 'Building your .pptm file…', [
+      { state: 'done',   label: 'Calling Gemini API' },
+      { state: 'active', label: 'Building game file' },
+      { state: '',       label: 'Ready to download' },
+    ]);
+
+    let blob;
+    try {
+      const res = await fetch(BACKEND_URL + '/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_data: gameData, theme: theme }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || res.statusText);
+      }
+      blob = await res.blob();
+    } catch (err) {
+      btn.disabled = false;
+      return setStatus('error', 'Backend error: ' + err.message);
+    }
+
+    setStatus('success', 'Your game is ready!', [
+      { state: 'done', label: 'Calling Gemini API' },
+      { state: 'done', label: 'Building game file' },
+      { state: 'done', label: 'Ready to download' },
+    ]);
+
+    const slug = theme.slice(0, 20).trim();
+    const dlBtn = document.getElementById('downloadBtn');
+    dlBtn.href = URL.createObjectURL(blob);
+    dlBtn.download = `Family Feud - ${slug}.pptm`;
+
+    // Show question preview
+    document.getElementById('questionsList').innerHTML =
+      gameData.questions.map((q, i) =>
+        `<div class="q-pill"><span class="q-num">${i+1}</span><span>${q.q}</span></div>`
+      ).join('');
+
+    document.getElementById('preview').classList.add('visible');
+    btn.disabled = false;
+  }
+
+  async function callGemini(apiKey, theme, vocab) {
+    const vocabClause = vocab ? `Vocabulary to incorporate: ${vocab}.` : 'No specific vocabulary required.';
+    const prompt = document.getElementById('promptEditor').value
+      .replace(/\{\{THEME\}\}/g, theme)
+      .replace(/\{\{VOCAB\}\}/g, vocabClause);
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+        })
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('Empty response from Gemini');
+
+    const clean = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); }
+    catch (e) { throw new Error('Gemini returned invalid JSON. Try again.'); }
+
+    if (!parsed.questions || parsed.questions.length !== 10)
+      throw new Error(`Expected 10 questions, got ${parsed.questions?.length ?? 0}`);
+
+    return parsed;
+  }
+</script>
+</body>
+</html>
