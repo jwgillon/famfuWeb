@@ -1,3 +1,4 @@
+import copy
 import io
 import logging
 import os
@@ -9,14 +10,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
+from lxml import etree
 from pptx import Presentation
+from pptx.oxml.ns import qn
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
-
-# VERSION: 1.2 - Testing Answer Space Fix
-log.info("--- SYSTEM STARTING: VERSION 1.3 ---")
 
 app = FastAPI(title="Family Feud Generator API")
 
@@ -39,8 +39,7 @@ class GenerateRequest(BaseModel):
 def set_shape_text(shape_collection, shape_name: str, text: str) -> bool:
     """Recursively search shapes (including inside groups) and set text."""
     for shape in shape_collection:
-        # Recurse into groups
-        if shape.shape_type == 6:  # GROUP
+        if shape.shape_type == 6:  # GROUP — recurse
             if set_shape_text(shape.shapes, shape_name, text):
                 return True
             continue
@@ -59,6 +58,43 @@ def set_shape_text(shape_collection, shape_name: str, text: str) -> bool:
             para.runs[0].text = text
             for run in para.runs[1:]:
                 run.text = ""
+        return True
+    return False
+
+
+def set_multiline_shape(slide, shape_name: str, text: str) -> bool:
+    """Replace all paragraphs in a shape with new multiline text.
+    Used for print answer sheet columns which have many paragraphs."""
+    for shape in slide.shapes:
+        if shape.name != shape_name:
+            continue
+        if not shape.has_text_frame:
+            return False
+        tf = shape.text_frame
+        txBody = tf._txBody
+
+        # Save font properties from first run
+        rPr_copy = None
+        if tf.paragraphs and tf.paragraphs[0].runs:
+            orig_rPr = tf.paragraphs[0].runs[0]._r.find(qn('a:rPr'))
+            if orig_rPr is not None:
+                rPr_copy = copy.deepcopy(orig_rPr)
+
+        # Remove ALL existing paragraphs
+        for p in txBody.findall(qn('a:p')):
+            txBody.remove(p)
+
+        # Insert one paragraph per line
+        for line in text.split('\n'):
+            p_elem = etree.fromstring(
+                f'<a:p xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+                f'<a:r><a:t>{line}</a:t></a:r></a:p>'
+            )
+            if rPr_copy is not None:
+                r_elem = p_elem.find(qn('a:r'))
+                r_elem.insert(0, copy.deepcopy(rPr_copy))
+            txBody.append(p_elem)
+
         return True
     return False
 
@@ -130,11 +166,11 @@ async def generate(req: GenerateRequest):
                 set_slide_shape(data_slide, f"FF_Q{n}_A{a_idx+1}", str(answers[a_idx]))
                 set_slide_shape(data_slide, f"FF_Q{n}_P{a_idx+1}", str(points[a_idx]))
 
-            # ── Question text on all 3 game slides for this question ──
+            # ── Question text on all 3 game slides ──
             for shape_name in [f"FF_QT{n}", f"FF_QQ{n}", f"FF_QTR{n}"]:
                 set_all_slides(prs, shape_name, question_text)
 
-            # ── Answer board slide — answers inside groups (FF_QN_ATX / FF_QN_APX) ──
+            # ── Answer board slide (FF_QN_ATX / FF_QN_APX inside groups) ──
             board_slide_idx = 4 + (q_idx * 3) + 1
             if board_slide_idx < len(prs.slides):
                 board_slide = prs.slides[board_slide_idx]
@@ -143,44 +179,37 @@ async def generate(req: GenerateRequest):
                     ok_a = set_slide_shape(board_slide, f"FF_Q{n}_AT{a_num}", str(answers[a_idx]))
                     ok_p = set_slide_shape(board_slide, f"FF_Q{n}_AP{a_num}", str(points[a_idx]))
                     if not ok_a or not ok_p:
-                        log.warning("MISS on board: Q%d A%d  AT=%s AP=%s", n, a_num, ok_a, ok_p)
+                        log.warning("MISS on board: Q%d A%d AT=%s AP=%s", n, a_num, ok_a, ok_p)
                     else:
                         log.info("  AT%d='%s' AP%d=%s", a_num, answers[a_idx], a_num, points[a_idx])
 
-            # ── Reveal slide ──
+            # ── Reveal slide (FF_QN_ATX_R / FF_QN_APX_R) ──
             reveal_slide_idx = 4 + (q_idx * 3) + 2
             if reveal_slide_idx < len(prs.slides):
                 reveal_slide = prs.slides[reveal_slide_idx]
                 for a_idx in range(8):
                     a_num = a_idx + 1
-                    
-                    # Capture the success/fail status for each shape
                     ok_ra = set_slide_shape(reveal_slide, f"FF_Q{n}_AT{a_num}_R", str(answers[a_idx]))
                     ok_rp = set_slide_shape(reveal_slide, f"FF_Q{n}_AP{a_num}_R", str(points[a_idx]))
-                    
-                    # Error logging for the Reveal Slide
                     if not ok_ra or not ok_rp:
-                        log.warning("MISS on REVEAL: Q%d A%d  AT=%s AP=%s", n, a_num, ok_ra, ok_rp)
-                    else:
-                        log.info("  REVEAL SUCCESS: Q%d A%d AT%d='%s' AP%d=%s", n, a_num, a_num, answers[a_idx], a_num, points[a_idx])
-
+                        log.warning("MISS on reveal: Q%d A%d AT=%s AP=%s", n, a_num, ok_ra, ok_rp)
 
             blocks.append(format_question_block(n, question_text, answers, points))
 
-        # ── Print answer sheet (slide 3) ──
+        # ── Print answer sheet (slide 3) — full paragraph replacement ──
         col1 = "\n\n".join(blocks[0:2])
         col2 = "\n\n".join(blocks[2:5])
         col3 = "\n\n".join(blocks[5:8])
         col4 = "\n\n".join(blocks[8:10])
 
-        set_slide_shape(print_slide, "PrintColumn1", col1)
-        set_slide_shape(print_slide, "PrintColumn2", col2)
-        set_slide_shape(print_slide, "PrintColumn3", col3)
-        set_slide_shape(print_slide, "PrintColumn4", col4)
+        set_multiline_shape(print_slide, "PrintColumn1", col1)
+        set_multiline_shape(print_slide, "PrintColumn2", col2)
+        set_multiline_shape(print_slide, "PrintColumn3", col3)
+        set_multiline_shape(print_slide, "PrintColumn4", col4)
 
         now = datetime.now()
         print_info = f"FAMILY FEUD:\nHOST ANSWER KEY\nDate: {now.strftime('%d %B %Y')}\nTime: {now.strftime('%I:%M %p')}"
-        set_slide_shape(print_slide, "PrintInfo", print_info)
+        set_multiline_shape(print_slide, "PrintInfo", print_info)
         log.info("Print answer sheet updated")
 
         # ── Build file ──
