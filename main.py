@@ -15,6 +15,9 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
+# VERSION: 1.2 - Testing Answer Space Fix
+log.info("--- SYSTEM STARTING: VERSION 1.2 ---")
+
 app = FastAPI(title="Family Feud Generator API")
 
 app.add_middleware(
