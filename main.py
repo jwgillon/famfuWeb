@@ -153,8 +153,17 @@ async def generate(req: GenerateRequest):
                 reveal_slide = prs.slides[reveal_slide_idx]
                 for a_idx in range(8):
                     a_num = a_idx + 1
-                    set_slide_shape(reveal_slide, f"FF_Q{n}_AT{a_num}", str(answers[a_idx]))
-                    set_slide_shape(reveal_slide, f"FF_Q{n}_AP{a_num}", str(points[a_idx]))
+                    
+                    # Capture the success/fail status for each shape
+                    ok_ra = set_slide_shape(reveal_slide, f"FF_Q{n}_AT{a_num}_R", str(answers[a_idx]))
+                    ok_rp = set_slide_shape(reveal_slide, f"FF_Q{n}_AP{a_num}_R", str(points[a_idx]))
+                    
+                    # Error logging for the Reveal Slide
+                    if not ok_ra or not ok_rp:
+                        log.warning("MISS on REVEAL: Q%d A%d  AT=%s AP=%s", n, a_num, ok_ra, ok_rp)
+                    else:
+                        log.info("  REVEAL SUCCESS: Q%d A%d AT%d='%s' AP%d=%s", n, a_num, a_num, answers[a_idx], a_num, points[a_idx])
+
 
             blocks.append(format_question_block(n, question_text, answers, points))
 
