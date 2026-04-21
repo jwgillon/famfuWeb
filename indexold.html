@@ -375,10 +375,10 @@
     <div class="field">
       <label>Gemini API Key</label>
       <div class="input-row">
-        <input type="password" id="apiKey" placeholder="Optional — only needed if shared key is maxed out" autocomplete="off" />
+        <input type="password" id="apiKey" placeholder="AIza..." autocomplete="off" />
         <button class="toggle-btn" onclick="toggleKey()">SHOW</button>
       </div>
-      <div class="field-hint" id="apiKeyHint">
+      <div class="field-hint">
         Your key never leaves your browser. Get one free at
         <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
       </div>
@@ -459,20 +459,6 @@
   const BACKEND_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8000'
     : '';
-  const GEMINI_MODEL = 'gemini-2.5-flash-lite';
-
-  (async () => {
-    try {
-      const res = await fetch(BACKEND_URL + '/has-master-key');
-      const data = await res.json();
-      if (data.available) {
-        document.getElementById('apiKey').placeholder = 'Optional — only needed if shared key is maxed out';
-        document.getElementById('apiKeyHint').innerHTML =
-          'Leave blank to use the shared key, or enter your own if the shared key is maxed out. ' +
-          'Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>';
-      }
-    } catch (e) {}
-  })();
 
   const DEFAULT_PROMPT =
 `You are generating content for a Family Feud game. Theme: {{THEME}}. {{VOCAB}}
@@ -569,13 +555,7 @@ Use this exact structure:
     const theme  = document.getElementById('theme').value.trim();
     const vocab  = document.getElementById('vocab').value.trim();
 
-    if (!apiKey) {
-      try {
-        const chk = await fetch(BACKEND_URL + '/has-master-key');
-        const chkData = await chk.json();
-        if (!chkData.available) return setStatus('error', 'Please enter your Gemini API key.');
-      } catch(e) { return setStatus('error', 'Please enter your Gemini API key.'); }
-    }
+    if (!apiKey) return setStatus('error', 'Please enter your Gemini API key.');
     if (!theme)  return setStatus('error', 'Please enter a theme.');
 
     const btn = document.getElementById('generateBtn');
@@ -608,7 +588,7 @@ Use this exact structure:
       const res = await fetch(BACKEND_URL + '/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game_data: gameData, theme: theme, api_key: apiKey }),
+        body: JSON.stringify({ game_data: gameData, theme: theme }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -642,14 +622,13 @@ Use this exact structure:
   }
 
   async function callGemini(apiKey, theme, vocab) {
-    if (!apiKey) return await callGeminiViaBackend(theme, vocab);
     const vocabClause = vocab ? `Vocabulary to incorporate: ${vocab}.` : 'No specific vocabulary required.';
     const prompt = document.getElementById('promptEditor').value
       .replace(/\{\{THEME\}\}/g, theme)
       .replace(/\{\{VOCAB\}\}/g, vocabClause);
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -677,30 +656,6 @@ Use this exact structure:
     if (!parsed.questions || parsed.questions.length !== 10)
       throw new Error(`Expected 10 questions, got ${parsed.questions?.length ?? 0}`);
 
-    return parsed;
-  }
-
-  async function callGeminiViaBackend(theme, vocab) {
-    const vocabClause = vocab ? `Vocabulary to incorporate: ${vocab}.` : 'No specific vocabulary required.';
-    const prompt = document.getElementById('promptEditor').value
-      .replace(/{{THEME}}/g, theme)
-      .replace(/{{VOCAB}}/g, vocabClause);
-    const res = await fetch(BACKEND_URL + '/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || res.statusText);
-    }
-    const data = await res.json();
-    const clean = data.text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-    let parsed;
-    try { parsed = JSON.parse(clean); }
-    catch (e) { throw new Error('Invalid JSON from Gemini. Try again.'); }
-    if (!parsed.questions || parsed.questions.length !== 10)
-      throw new Error(`Expected 10 questions, got ${parsed.questions?.length ?? 0}`);
     return parsed;
   }
 </script>

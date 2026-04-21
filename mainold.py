@@ -13,7 +13,6 @@ from fastapi.staticfiles import StaticFiles
 from lxml import etree
 from pptx import Presentation
 from pptx.oxml.ns import qn
-import httpx
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -30,14 +29,11 @@ app.add_middleware(
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(HERE, "template.pptm")
-GEMINI_MODEL = "gemini-2.5-flash-lite"
-MASTER_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 
 class GenerateRequest(BaseModel):
     game_data: dict[str, Any]
     theme: str = "Game"
-    api_key: str = ""
 
 
 def set_shape_text(shape_collection, shape_name: str, text: str) -> bool:
@@ -121,36 +117,6 @@ def format_question_block(n: int, question: str, answers: list, points: list) ->
         padded = prefix.ljust(20, '.')
         lines.append(f"{padded}({pts})")
     return "\n".join(lines)
-
-
-@app.get("/has-master-key")
-async def has_master_key():
-    return {"available": bool(MASTER_API_KEY)}
-
-
-class GeminiRequest(BaseModel):
-    prompt: str
-
-
-@app.post("/gemini")
-async def call_gemini(req: GeminiRequest):
-    if not MASTER_API_KEY:
-        raise HTTPException(400, "No master API key configured on server")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={MASTER_API_KEY}"
-    payload = {
-        "contents": [{"parts": [{"text": req.prompt}]}],
-        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 8192}
-    }
-    async with httpx.AsyncClient(timeout=120) as client:
-        res = await client.post(url, json=payload)
-    if res.status_code != 200:
-        raise HTTPException(502, f"Gemini API error: {res.text[:200]}")
-    data = res.json()
-    text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-    if not text:
-        raise HTTPException(502, "Empty response from Gemini")
-    log.info("Gemini via master key returned %d chars", len(text))
-    return {"text": text}
 
 
 @app.post("/generate")
