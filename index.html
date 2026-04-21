@@ -373,18 +373,6 @@
     <div class="card-title">Configuration</div>
 
     <div class="field">
-      <label>Gemini API Key</label>
-      <div class="input-row">
-        <input type="password" id="apiKey" placeholder="Optional — only needed if shared key is maxed out" autocomplete="off" />
-        <button class="toggle-btn" onclick="toggleKey()">SHOW</button>
-      </div>
-      <div class="field-hint" id="apiKeyHint">
-        Your key never leaves your browser. Get one free at
-        <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
-      </div>
-    </div>
-
-    <div class="field">
       <label>Theme</label>
       <textarea id="theme" rows="3" placeholder="e.g. Things you find at the beach in Huatulco for a B1 ESL class in Mexico"></textarea>
       <div class="field-hint">Be specific — the more detail, the better your game.</div>
@@ -398,12 +386,25 @@
     <!-- Advanced prompt editor -->
     <button class="advanced-toggle" id="advToggle" onclick="toggleAdvanced()">
       <span class="adv-line"></span>
-      Advanced · Edit Prompt
+      Advanced · Edit Prompt · API Key
       <span class="advanced-arrow">▼</span>
       <span class="adv-line"></span>
     </button>
 
     <div class="advanced-body" id="advBody">
+
+          <div class="field">
+      <label>Gemini API Key</label>
+      <div class="input-row">
+        <input type="password" id="apiKey" placeholder="Use your own API Key if shared key is maxed out" autocomplete="off" />
+        <button class="toggle-btn" onclick="toggleKey()">SHOW</button>
+      </div>
+      <div class="field-hint" id="apiKeyHint">
+        Your key never leaves your browser. Get one free at
+        <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a>
+      </div>
+    </div>
+
       <div class="field">
         <label>System Prompt</label>
         <textarea class="prompt-textarea" id="promptEditor" rows="16"></textarea>

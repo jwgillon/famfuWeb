@@ -280,3 +280,4 @@ async def root():
         raise HTTPException(404, "index.html not found")
     with open(html_path) as f:
         return f.read()
+    
