@@ -181,7 +181,7 @@ async def generate(req: GenerateRequest):
         prs = Presentation(TEMPLATE_PATH)
         log.info("Template loaded. Slides: %d", len(prs.slides))
 
-        data_slide  = prs.slides[40]  # Slide 41 - data
+        data_slide  = prs.slides[39]  # Slide 40 - data
         print_slide = prs.slides[2]   # Slide 3  - print answer sheet
 
         blocks = []
