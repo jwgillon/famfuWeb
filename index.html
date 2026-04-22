@@ -494,49 +494,61 @@ textarea { resize: vertical; min-height: 88px; }
     } catch (e) {}
   })();
 
-  const DEFAULT_PROMPT =
+const DEFAULT_PROMPT =
 `You are generating content for a Family Feud game. Theme: {{THEME}}. {{VOCAB}}
 
-STEP 1: Quietly brainstorm at least 20 possible survey-style questions related to the theme and vocabulary.
+STEP 1: Quietly brainstorm at least 20 possible survey-style questions related to the theme and vocabulary. Focus on BROAD categories that easily have 5 to 8 distinct answers.
 
 STEP 2: Select the BEST 10 questions using these standards:
-
-* The question should have at least 8 natural, believable answers.
+* The question should naturally yield 5 to 8 strong, distinct answers. Avoid overly specific questions (e.g., use "Name a marine animal" instead of "Name a specific dolphin behavior").
 * The question should clearly connect to the theme or vocabulary.
 * The question should be easy to understand for an ESL classroom in Mexico.
 * Avoid questions that could have many equally good answers with no clear ranking.
 
-STEP 3: For each selected question, create exactly 8 answers and 8 point values.
+STEP 3: For each selected question, format exactly 8 answer slots and 8 point values using the rules below.
 
 QUALITY RULES:
 
 1. UNIQUENESS: Every question must be different. Do not repeat the same idea with slightly different wording.
-2. MUTUAL EXCLUSIVITY: Ensure answers do not overlap.
-3. DISTINCT ANSWERS: Within a question, all 8 answers must be different.
-4. BELIEVABLE SURVEY ORDER: Answer 1 should be the most common response, etc.
-5. REVIEW TEST: After creating each question, ask yourself: If 100 people were surveyed, would these 8 answers feel realistic and appear in roughly this order? If not, rewrite them.
-6. SPECIFICITY: Avoid vague answers like thing, stuff, person, food, place. Use specific natural responses.
-7. ANSWER LENGTH: Every answer must be 1-4 words only.
-8. ESL FRIENDLY: Use common vocabulary, short wording, and familiar ideas.
-9. APPROPRIATE: No controversial, political, violent, romantic, or adult content.
-10. VARIETY: Mix different types of questions such as objects, places, actions, foods, jobs, animals, school topics, weather, travel, holidays, and daily life when possible.
+2. MUTUAL EXCLUSIVITY: Ensure answers do not overlap. (e.g., If 'Orange' is an answer, 'Citrus fruit' cannot be another answer in the same list).
+3. GROUP SYNONYMS: Do not split synonyms into separate answers just to pad the list. Group them together using a slash (e.g., "Talk / Chat" or "Sofa / Couch").
+4. THE "BLANK" RULE: If a question only has 4, 5, or 6 strong, realistic answers, DO NOT invent weak filler answers. Fill the remaining bottom slots with the exact word "BLANK".
+5. BELIEVABLE SURVEY ORDER: Answer 1 should be the most common response, answer 2 the second most common, etc.
+6. REVIEW TEST: After creating each question, ask yourself: If 100 people were surveyed, would these answers feel realistic and appear in roughly this order? If not, rewrite them.
+7. SPECIFICITY: Avoid vague answers like thing, stuff, person, food, place. Use specific natural responses.
+8. ANSWER LENGTH: Every answer must be 1-4 words only.
+9. ESL FRIENDLY: Use common vocabulary, short wording, and familiar ideas.
+10. APPROPRIATE: No controversial, political, violent, romantic, or adult content.
 11. NATURAL LANGUAGE: Questions should sound like real Family Feud questions.
 
 QUESTION RULES:
 
 * Every question must begin with either:
-  * Name something...
-  * We asked 100 people...
+* Name something...
+* We asked 100 people...
+* Good example: Name something you take to the beach.
+* Good example: We asked 100 people to name a food that is red.
 
 POINT RULES:
 
-* Each question must have exactly 8 answers.
-* Each question must have exactly 8 point values.
-* STRICT MATH: Points must sum to exactly 100.
-* Point values must strictly decrease from answer 1 to answer 8.
+* Each question must output an array of exactly 8 answers.
+* Each question must output an array of exactly 8 point values.
+* STRICT MATH: Perform a final sum of the 'points' array for each question. If the total is not 100, adjust the values until it is.
 * Answer 1 must be worth between 30 and 50 points.
-* Answers 7 and 8 should usually have small values between 1 and 6.
-* Example valid distribution: [42,18,12,10,7,5,4,2]
+* Point values must strictly decrease from answer 1 down to the last valid answer.
+* Any slot labeled "BLANK" MUST have a point value of exactly 0.
+* Any answer worth 3 points or less must be changed to BLANK with 0 points. Redistribute those points to Answer 1 to maintain the sum of exactly 100. If this would push Answer 1 above 50, add to Answer 2 instead.
+* Example valid distribution with blanks: [45,25,15,10,5,0,0,0]
+
+FINAL REVIEW:
+Before responding, check every question:
+* Exactly 8 items in the answers array?
+* Exactly 8 items in the points array?
+* Points sum to exactly 100?
+* Answer 1 between 30 and 50?
+* No repeated answers or separated synonyms?
+* Filler answers replaced with "BLANK" and 0 points?
+* JSON is valid?
 
 FORMATTING RULES:
 
@@ -550,7 +562,7 @@ Use this exact structure:
 
 {"questions":[
 {"q":"Question 1 text","answers":["A1","A2","A3","A4","A5","A6","A7","A8"],"points":[42,18,12,10,7,5,4,2]},
-{"q":"Question 2 text","answers":["A1","A2","A3","A4","A5","A6","A7","A8"],"points":[40,17,13,10,8,5,4,3]}
+{"q":"Question 2 text","answers":["A1","A2","A3","A4","A5","BLANK","BLANK","BLANK"],"points":[45,25,15,10,5,0,0,0]}
 ]}`;
 
   document.getElementById('promptEditor').value = DEFAULT_PROMPT;
