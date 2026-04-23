@@ -23,6 +23,7 @@ app = FastAPI(title="Family Feud Generator API")
 
 @app.get("/health")
 def health():
+    log.info("Health check hit")
     return {"status": "ok"}
 
 app.add_middleware(
