@@ -30,7 +30,7 @@ app.add_middleware(
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_PATH = os.path.join(HERE, "template.pptm")
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-2.5-flash"
 MASTER_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 
@@ -117,6 +117,8 @@ def set_all_slides(prs, shape_name: str, text: str) -> bool:
 def format_question_block(n: int, question: str, answers: list, points: list) -> str:
     lines = [f"QUESTION {n}: {question.upper()}"]
     for i, (ans, pts) in enumerate(zip(answers, points), 1):
+        if str(ans).upper().strip() == "BLANK":
+            continue
         prefix = f"{i}) {ans}"
         padded = prefix.ljust(20, '.')
         lines.append(f"{padded}({pts})")

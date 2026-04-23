@@ -479,7 +479,7 @@ textarea { resize: vertical; min-height: 88px; }
   const BACKEND_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8000'
     : '';
-  const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+  const GEMINI_MODEL = 'gemini-2.5-flash';
 
   (async () => {
     try {
@@ -712,7 +712,7 @@ Use this exact structure:
     return parsed;
   }
 
-  async function callGeminiViaBackend(theme, vocab) {
+async function callGeminiViaBackend(theme, vocab) {
     const vocabClause = vocab ? `Vocabulary to incorporate: ${vocab}.` : 'No specific vocabulary required.';
     const prompt = document.getElementById('promptEditor').value
       .replace(/{{THEME}}/g, theme)
@@ -727,7 +727,9 @@ Use this exact structure:
       throw new Error(err.detail || res.statusText);
     }
     const data = await res.json();
-    const clean = data.text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+    const jsonMatch = data.text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found in Gemini response. Try again.');
+    const clean = jsonMatch[0];
     let parsed;
     try { parsed = JSON.parse(clean); }
     catch (e) { throw new Error('Invalid JSON from Gemini. Try again.'); }
