@@ -5,7 +5,7 @@ import os
 import traceback
 from datetime import datetime
 from typing import Any
- 
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
@@ -44,6 +44,8 @@ class GenerateRequest(BaseModel):
     theme: str = "Game"
     api_key: str = ""
 
+
+# ── Shape text helpers ────────────────────────────────────────────────────────
 
 def set_shape_text(shape_collection, shape_name: str, text: str) -> bool:
     """Recursively search shapes (including inside groups) and set text."""
@@ -119,6 +121,31 @@ def set_all_slides(prs, shape_name: str, text: str) -> bool:
     return False
 
 
+# ── Shape visibility helper ───────────────────────────────────────────────────
+
+def set_shape_visible(slide, shape_name: str, visible: bool) -> bool:
+    """Set visibility on a top-level shape by name via XML.
+    Works for both regular shapes (p:sp) and group shapes (p:grpSp).
+    Visibility is controlled by the hidden attribute on p:cNvPr."""
+    for shape in slide.shapes:
+        if shape.name != shape_name:
+            continue
+        # cNvPr lives at different XPath for sp vs grpSp but findall catches both
+        cNvPr = shape._element.find('.//' + qn('p:cNvPr'))
+        if cNvPr is None:
+            log.warning("cNvPr not found on shape: %s", shape_name)
+            return False
+        if visible:
+            cNvPr.attrib.pop('hidden', None)
+        else:
+            cNvPr.set('hidden', '1')
+        return True
+    log.warning("Shape not found for visibility: %s", shape_name)
+    return False
+
+
+# ── Print answer sheet helper ─────────────────────────────────────────────────
+
 def format_question_block(n: int, question: str, answers: list, points: list) -> str:
     lines = [f"QUESTION {n}: {question.upper()}"]
     for i, (ans, pts) in enumerate(zip(answers, points), 1):
@@ -129,6 +156,8 @@ def format_question_block(n: int, question: str, answers: list, points: list) ->
         lines.append(f"{padded}({pts})")
     return "\n".join(lines)
 
+
+# ── API endpoints ─────────────────────────────────────────────────────────────
 
 @app.get("/has-master-key")
 async def has_master_key():
@@ -201,7 +230,7 @@ async def generate(req: GenerateRequest):
 
             log.info("Q%d: '%s'", n, question_text[:50])
 
-            # ── Data slide (slide 41) ──
+            # ── Data slide ──
             set_slide_shape(data_slide, f"FF_Q{n}", question_text)
             for a_idx in range(8):
                 set_slide_shape(data_slide, f"FF_Q{n}_A{a_idx+1}", str(answers[a_idx]))
@@ -211,12 +240,15 @@ async def generate(req: GenerateRequest):
             for shape_name in [f"FF_QT{n}", f"FF_QQ{n}", f"FF_QTR{n}"]:
                 set_all_slides(prs, shape_name, question_text)
 
-            # ── Answer board slide (FF_QN_ATX / FF_QN_APX inside groups) ──
+            # ── Board slide (covers + answer groups) ──
             board_slide_idx = 4 + (q_idx * 3) + 1
             if board_slide_idx < len(prs.slides):
                 board_slide = prs.slides[board_slide_idx]
                 for a_idx in range(8):
-                    a_num = a_idx + 1
+                    a_num    = a_idx + 1
+                    is_blank = str(answers[a_idx]).upper().strip() == "BLANK"
+
+                    # Write text
                     ok_a = set_slide_shape(board_slide, f"FF_Q{n}_AT{a_num}", str(answers[a_idx]))
                     ok_p = set_slide_shape(board_slide, f"FF_Q{n}_AP{a_num}", str(points[a_idx]))
                     if not ok_a or not ok_p:
@@ -224,20 +256,36 @@ async def generate(req: GenerateRequest):
                     else:
                         log.info("  AT%d='%s' AP%d=%s", a_num, answers[a_idx], a_num, points[a_idx])
 
-            # ── Reveal slide (FF_QN_ATX_R / FF_QN_APX_R) ──
+                    # Reset to visible first, then hide if BLANK
+                    set_shape_visible(board_slide, f"FF_Q{n}_GRP{a_num}",   not is_blank)
+                    set_shape_visible(board_slide, f"FF_Q{n}_Cover{a_num}", not is_blank)
+
+                    if is_blank:
+                        log.info("  Hiding board slot Q%d A%d (BLANK)", n, a_num)
+
+            # ── Reveal slide (no covers, groups only) ──
             reveal_slide_idx = 4 + (q_idx * 3) + 2
             if reveal_slide_idx < len(prs.slides):
                 reveal_slide = prs.slides[reveal_slide_idx]
                 for a_idx in range(8):
-                    a_num = a_idx + 1
+                    a_num    = a_idx + 1
+                    is_blank = str(answers[a_idx]).upper().strip() == "BLANK"
+
+                    # Write text
                     ok_ra = set_slide_shape(reveal_slide, f"FF_Q{n}_AT{a_num}_R", str(answers[a_idx]))
                     ok_rp = set_slide_shape(reveal_slide, f"FF_Q{n}_AP{a_num}_R", str(points[a_idx]))
                     if not ok_ra or not ok_rp:
                         log.warning("MISS on reveal: Q%d A%d AT=%s AP=%s", n, a_num, ok_ra, ok_rp)
 
+                    # Reset to visible first, then hide if BLANK
+                    set_shape_visible(reveal_slide, f"FF_Q{n}_GRP{a_num}_R", not is_blank)
+
+                    if is_blank:
+                        log.info("  Hiding reveal slot Q%d A%d (BLANK)", n, a_num)
+
             blocks.append(format_question_block(n, question_text, answers, points))
 
-        # ── Print answer sheet (slide 3) — full paragraph replacement ──
+        # ── Print answer sheet ──
         col1 = "\n\n".join(blocks[0:2])
         col2 = "\n\n".join(blocks[2:5])
         col3 = "\n\n".join(blocks[5:8])
@@ -287,4 +335,3 @@ async def root():
         raise HTTPException(404, "index.html not found")
     with open(html_path) as f:
         return f.read()
-    
