@@ -124,21 +124,26 @@ def set_all_slides(prs, shape_name: str, text: str) -> bool:
 # ── Shape visibility helper ───────────────────────────────────────────────────
 
 def set_shape_visible(slide, shape_name: str, visible: bool) -> bool:
-    """Set visibility on a top-level shape by name via XML.
-    Works for both regular shapes (p:sp) and group shapes (p:grpSp).
-    Visibility is controlled by the hidden attribute on p:cNvPr."""
+    """Set visibility on a top-level shape and all its children via XML."""
     for shape in slide.shapes:
         if shape.name != shape_name:
             continue
-        # cNvPr lives at different XPath for sp vs grpSp but findall catches both
+        # Set visibility on the shape itself
         cNvPr = shape._element.find('.//' + qn('p:cNvPr'))
-        if cNvPr is None:
-            log.warning("cNvPr not found on shape: %s", shape_name)
-            return False
-        if visible:
-            cNvPr.attrib.pop('hidden', None)
-        else:
-            cNvPr.set('hidden', '1')
+        if cNvPr is not None:
+            if visible:
+                cNvPr.attrib.pop('hidden', None)
+            else:
+                cNvPr.set('hidden', '1')
+        # Also set visibility on ALL children if it's a group
+        if shape.shape_type == 6:  # msoGroup
+            for child in shape.shapes:
+                child_cNvPr = child._element.find('.//' + qn('p:cNvPr'))
+                if child_cNvPr is not None:
+                    if visible:
+                        child_cNvPr.attrib.pop('hidden', None)
+                    else:
+                        child_cNvPr.set('hidden', '1')
         return True
     log.warning("Shape not found for visibility: %s", shape_name)
     return False
