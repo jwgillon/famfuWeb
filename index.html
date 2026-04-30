@@ -690,9 +690,12 @@ Use this exact structure:
       gameData = await callGemini(apiKey, theme, vocab);
     } catch (err) {
       btn.disabled = false;
-      return setStatus('error', 'Gemini error: ' + err.message);
+      const msg = err.message || '';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg === '') {
+        return setStatus('error', 'Server is offline — please reload the page and try again.');
+      }
+      return setStatus('error', 'Gemini error: ' + msg);
     }
-
     setStatus('loading', `Building your .${fileExt} file…`, [
       { state: 'done',   label: 'Calling Gemini API' },
       { state: 'active', label: 'Building game file' },
@@ -713,7 +716,11 @@ Use this exact structure:
       blob = await res.blob();
     } catch (err) {
       btn.disabled = false;
-      return setStatus('error', 'Backend error: ' + err.message);
+      const msg = err.message || '';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg === '') {
+        return setStatus('error', 'Server is offline — please reload the page and try again.');
+      }
+      return setStatus('error', 'Backend error: ' + msg);
     }
 
     setStatus('success', 'Your game is ready!', [
