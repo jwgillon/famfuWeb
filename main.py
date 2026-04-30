@@ -263,7 +263,8 @@ async def generate(req: GenerateRequest):
                 set_all_slides(prs, shape_name, question_text)
 
             # ── Board slide (covers + answer groups) ──
-            board_slide_idx = 4 + (q_idx * 3) + 1
+            base = 3 if version == "simple" else 4
+            board_slide_idx = base + (q_idx * 3) + 1
             if board_slide_idx < len(prs.slides):
                 board_slide = prs.slides[board_slide_idx]
                 for a_idx in range(8):
@@ -286,13 +287,12 @@ async def generate(req: GenerateRequest):
                         log.info("  Hiding board slot Q%d A%d (BLANK)", n, a_num)
 
             # ── Reveal slide (no covers, groups only) ──
-            reveal_slide_idx = 4 + (q_idx * 3) + 2
+            reveal_slide_idx = base + (q_idx * 3) + 2
             if reveal_slide_idx < len(prs.slides):
                 reveal_slide = prs.slides[reveal_slide_idx]
                 for a_idx in range(8):
                     a_num    = a_idx + 1
                     is_blank = str(answers[a_idx]).upper().strip() == "BLANK"
-
                     # Write text
                     ok_ra = set_slide_shape(reveal_slide, f"FF_Q{n}_AT{a_num}_R", str(answers[a_idx]))
                     ok_rp = set_slide_shape(reveal_slide, f"FF_Q{n}_AP{a_num}_R", str(points[a_idx]))
