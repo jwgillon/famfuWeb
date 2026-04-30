@@ -34,7 +34,8 @@ app.add_middleware(
 )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE_PATH = os.path.join(HERE, "template.pptm")
+TEMPLATE_FULL   = os.path.join(HERE, "template.pptm")
+TEMPLATE_SIMPLE = os.path.join(HERE, "template_simple.pptx")
 GEMINI_MODEL = "gemini-2.5-flash"
 MASTER_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
@@ -43,6 +44,7 @@ class GenerateRequest(BaseModel):
     game_data: dict[str, Any]
     theme: str = "Game"
     api_key: str = ""
+    version: str = "full"
 
 
 # ── Shape text helpers ────────────────────────────────────────────────────────
@@ -213,17 +215,32 @@ async def generate(req: GenerateRequest):
         if len(q["points"]) != 8:
             raise HTTPException(400, f"Question {i+1} needs 8 points")
 
-    if not os.path.exists(TEMPLATE_PATH):
-        raise HTTPException(500, f"Template not found: {TEMPLATE_PATH}")
+    version = req.version.strip().lower()
 
-    log.info("Generating Family Feud. Theme: %s", req.theme)
+    if version == "simple":
+        template_path = TEMPLATE_SIMPLE
+        media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    else:
+        template_path = TEMPLATE_FULL
+        media_type = "application/vnd.ms-powerpoint.presentation.macroEnabled.12"
+
+    if not os.path.exists(template_path):
+        raise HTTPException(500, f"Template not found: {template_path}")
+
+    log.info("Generating Family Feud. Theme: %s, Version: %s", req.theme, version)
 
     try:
-        prs = Presentation(TEMPLATE_PATH)
-        log.info("Template loaded. Slides: %d", len(prs.slides))
+        prs = Presentation(template_path)
+        log.info("Template loaded: %s — Slides: %d", template_path, len(prs.slides))
 
-        data_slide  = prs.slides[39]  # Slide 40 - data
-        print_slide = prs.slides[2]   # Slide 3  - print answer sheet
+        def find_slide_by_name(name):
+            for s in prs.slides:
+                if s.name == name:
+                    return s
+            raise HTTPException(500, f"Data slide not found: '{name}'")
+
+        data_slide  = find_slide_by_name("DataSlide_FamilyFeud")
+        print_slide = find_slide_by_name("DataSlide_PrintCopy")
 
         blocks = []
 
@@ -308,17 +325,19 @@ async def generate(req: GenerateRequest):
 
         # ── Build file ──
         slug = "".join(c for c in req.theme[:20] if c.isalnum() or c in " -_").strip() or "Game"
+        ext = "pptx" if version == "simple" else "pptm"
+        filename = f"Family Feud - {slug}.{ext}"
 
         buf = io.BytesIO()
         prs.save(buf)
         buf.seek(0)
         file_bytes = buf.read()
-        log.info("File built: %d bytes", len(file_bytes))
+        log.info("File built: %d bytes, version: %s", len(file_bytes), version)
 
         return Response(
             content=file_bytes,
-            media_type="application/vnd.ms-powerpoint.presentation.macroEnabled.12",
-            headers={"Content-Disposition": f'attachment; filename="Family Feud - {slug}.pptm"'},
+            media_type=media_type,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     except HTTPException:

@@ -357,6 +357,39 @@ textarea { resize: vertical; min-height: 88px; }
 .unblock-or { font-size: 11px; letter-spacing: 2px; color: var(--gold-dim); text-align: center; margin: 11px 0 6px; }
 .unblock-alt { font-size: 13px; color: var(--hint); text-align: center; }
 
+/* ── Version selector ── */
+.version-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+
+.version-option { position: relative; }
+.version-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.version-label {
+  display: block; padding: 14px 16px; border-radius: 6px; cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.version-option input:checked + .version-label {
+  border-color: var(--gold);
+  background: rgba(240,180,41,0.12);
+}
+
+.version-label-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px; letter-spacing: 2px; color: var(--white);
+  margin-bottom: 5px;
+}
+
+.version-label-check {
+  color: var(--gold); margin-right: 4px;
+}
+
+.version-label-desc {
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--hint); line-height: 1.5;
+}
+
 /* ── Footer ── */
 .footer {
   text-align: center; margin-top: 48px;
@@ -402,6 +435,26 @@ textarea { resize: vertical; min-height: 88px; }
       <textarea id="vocab" placeholder="comma-separated words or phrases to include..."></textarea>
     </div>
 
+    <label>Game Version</label>
+    <div class="version-selector">
+      <div class="version-option">
+        <input type="radio" name="version" id="versionSimple" value="simple" checked>
+        <label class="version-label" for="versionSimple">
+          <div class="version-label-title"><span class="version-label-check">✓</span> Universal Version</div>
+          <div class="version-label-desc">Manual scoreboard · No macros required · Works on Mac & Windows · Download: .pptx</div>
+        </label>
+      </div>
+      <div class="version-option">
+        <input type="radio" name="version" id="versionFull" value="full">
+        <label class="version-label" for="versionFull">
+          <div class="version-label-title">⚡ Macros Version</div>
+          <div class="version-label-desc">Includes interactive scoreboard · Requires macros (Windows only) · Download: .pptm · Extras</div>
+        </label>
+      </div>
+    </div>
+
+
+
     <!-- Advanced prompt editor -->
     <button class="advanced-toggle" id="advToggle" onclick="toggleAdvanced()">
       <span class="adv-line"></span>
@@ -446,10 +499,8 @@ textarea { resize: vertical; min-height: 88px; }
   <div class="preview" id="preview">
     <div class="preview-title">Game Preview — 10 Questions</div>
     <div class="questions-list" id="questionsList"></div>
-    <a class="btn-download" id="downloadBtn" href="#"
-       download="Family Feud Game.pptm"
-       onclick="document.getElementById('unblockNotice').style.display='block'">
-      ⬇ Download .pptm Game File
+    <a class="btn-download" id="downloadBtn" href="#" download="Family Feud Game.pptm">
+      ⬇ Download Game File
     </a>
     <div class="unblock-notice" id="unblockNotice">
       <div class="unblock-notice-header">
@@ -600,6 +651,8 @@ Use this exact structure:
     const apiKey = document.getElementById('apiKey').value.trim();
     const theme  = document.getElementById('theme').value.trim();
     const vocab  = document.getElementById('vocab').value.trim();
+    const version = document.querySelector('input[name="version"]:checked').value;
+    const fileExt = version === 'simple' ? 'pptx' : 'pptm';
 
     if (!apiKey) {
       try {
@@ -629,7 +682,7 @@ Use this exact structure:
       return setStatus('error', 'Gemini error: ' + err.message);
     }
 
-    setStatus('loading', 'Building your .pptm file…', [
+    setStatus('loading', `Building your .${fileExt} file…`, [
       { state: 'done',   label: 'Calling Gemini API' },
       { state: 'active', label: 'Building game file' },
       { state: '',       label: 'Ready to download' },
@@ -640,7 +693,7 @@ Use this exact structure:
       const res = await fetch(BACKEND_URL + '/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game_data: gameData, theme: theme, api_key: apiKey }),
+        body: JSON.stringify({ game_data: gameData, theme: theme, api_key: apiKey, version: version }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -661,7 +714,10 @@ Use this exact structure:
     const slug = theme.slice(0, 20).trim();
     const dlBtn = document.getElementById('downloadBtn');
     dlBtn.href = URL.createObjectURL(blob);
-    dlBtn.download = `Family Feud - ${slug}.pptm`;
+    dlBtn.download = `Family Feud - ${slug}.${fileExt}`;
+
+    // Show unblock notice only for full version
+    document.getElementById('unblockNotice').style.display = version === 'full' ? 'block' : 'none';
 
     // Show question preview
     document.getElementById('questionsList').innerHTML =
