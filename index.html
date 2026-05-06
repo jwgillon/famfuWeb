@@ -388,13 +388,35 @@ textarea { resize: vertical; min-height: 88px; }
 .unblock-alt { font-size: 13px; color: var(--hint); text-align: center; }
 
 /* ── Version selector ── */
-.version-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+/* ── Version selector ── */
+.version-selector { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 10px; 
+  margin: 20px 0; 
+  /* This ensures the grid items stretch to the same height */
+  align-items: stretch; 
+}
 
-.version-option { position: relative; }
-.version-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+.version-option { 
+  position: relative; 
+  /* Makes the container a flexbox so the label can grow to fill it */
+  display: flex;
+  flex-direction: column;
+}
+
+.version-option input[type="radio"] { 
+  position: absolute; opacity: 0; width: 0; height: 0; 
+}
 
 .version-label {
-  display: block; padding: 14px 16px; border-radius: 6px; cursor: pointer;
+  /* This forces the label to expand and fill the entire grid cell height */
+  flex: 1; 
+
+  display: block; 
+  padding: 14px 16px; 
+  border-radius: 6px; 
+  cursor: pointer;
   border: 1.5px solid rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.05);
   transition: border-color 0.2s, background 0.2s;
@@ -488,7 +510,7 @@ textarea { resize: vertical; min-height: 88px; }
     <!-- Advanced prompt editor -->
     <button class="advanced-toggle" id="advToggle" onclick="toggleAdvanced()">
       <span class="adv-line"></span>
-      Advanced · Edit Prompt · API Key
+      Advanced · Edit Prompt · API 🔑
       <span class="advanced-arrow">▼</span>
       <span class="adv-line"></span>
     </button>
