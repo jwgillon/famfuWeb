@@ -55,14 +55,6 @@ body::after {
   padding: 56px 24px 80px;
 }
 
-@media (max-width: 400px) {
-  .boom-right { 
-    font-size: 24px;
-    min-width: 0;
-    word-break: break-word;
-  }
-  .boom-left { font-size: 32px; }
-}
 
 /* ── Header ── */
 .header { text-align: center; margin-bottom: 32px; }
@@ -107,10 +99,12 @@ body::after {
 
 /* ── BOOM banner ── */
 .boom-banner {
-  display: flex; align-items: center; gap: 24px;
+  display: flex; 
+  align-items: center; 
+  gap: 24px;
   padding-bottom: 0px;
   margin-bottom: 28px;
-  /*border-bottom: 1px solid var(--border);*/
+  flex-wrap: nowrap; /* Prevent wrapping on desktop */
 }
 
 .boom-left {
@@ -136,6 +130,31 @@ body::after {
   min-width: 0;
   word-break: break-word;
 }
+
+
+@media (max-width: 480px) {
+  .boom-banner { 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 12px; /* Tighter gap for mobile */
+    text-align: center;
+  }
+
+  .boom-right { 
+    /*font-size: 24px; */
+    width: 100%; /* Forces the yellow text to its own line below the arrow */
+  }
+
+  .boom-left  { 
+    font-size: 48px; 
+  }
+
+  .boom-arrow {
+    /*transform: rotate(90deg); /* Points down toward the yellow text */
+    margin: -5px 0 0 30px;
+  }
+}
+
 
 /* ── Card title ── */
 .card-title {
